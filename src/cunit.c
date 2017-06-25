@@ -5,6 +5,7 @@
 
 #define NO_REASONS 100
 #define INT 1
+#define STRING 2
 #define log printf("I got here!\n");
 
 struct utest {
@@ -22,6 +23,8 @@ int num_tests = 0;
 void print_reasons(char **, int);
 void free_utest(struct utest *);
 char * expected_actual_string(int, void *, void *);
+void fail_test_with_reason(const char *, char *);
+
 
 
 void
@@ -88,15 +91,29 @@ int
 assert_equals_number(const char *reason, long double expected, long double actual) {
     if (expected == actual)
         return 1;
-    tail->failed++;
     char *ex_ac = expected_actual_string(INT, &expected, &actual);
-    *tail->reasons_ptr = (char *)malloc(strlen(reason) + strlen(ex_ac) + 1);
-
-    strcpy(*tail->reasons_ptr, reason);
-    strcat(*tail->reasons_ptr, ex_ac);
-    tail->reasons_ptr += 1;
+    fail_test_with_reason(reason, ex_ac);
     free(ex_ac);
     return 0;
+}
+
+int
+assert_equals_string(const char *reason, char *expected, char *actual) {
+    if (strcmp(expected, actual) == 0)
+        return 1;
+    char *ex_ac = expected_actual_string(STRING, expected, actual);
+    fail_test_with_reason(reason, ex_ac);
+    free(ex_ac);
+    return 0;
+}
+
+void
+fail_test_with_reason(const char *reason, char *expected_actual) {
+    tail->failed++;
+    *tail->reasons_ptr = (char *)malloc(strlen(reason) + strlen(expected_actual) + 1);
+    strcpy(*tail->reasons_ptr, reason);
+    strcat(*tail->reasons_ptr, expected_actual);
+    tail->reasons_ptr += 1;
 }
 
 char *
@@ -130,5 +147,3 @@ free_utest(struct utest *ptr) {
     free(ptr->title);
     free(ptr);
 }
-
-

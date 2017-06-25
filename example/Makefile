@@ -6,10 +6,10 @@ CFLAGS=-I$(IDIR) -L$(ODIR) -lcunit
 example: dirs main.o functions.o
 	gcc $(CFLAGS) src/main.o src/functions.o -o bin/example
 
-main.o: example.c mathfn.h
+main.o: example.c myLib.h
 	gcc $(CFLAGS) -c src/example.c -o src/main.o
 
-functions.o: functions.c mathfn.h
+functions.o: functions.c myLib.h
 	gcc $(CFLAGS) -c src/functions.c -o src/functions.o
 
 dirs:
