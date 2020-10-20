@@ -11,7 +11,7 @@ factorial(int n) {
 }
 
 int power(int base, int exp) {
-    if (exp == 1)
+    if (exp == 1 || exp == 0)
         return base;
     return base * power(base, exp - 1);
 }

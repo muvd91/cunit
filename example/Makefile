@@ -1,7 +1,6 @@
 VPATH=src:include:lib
-ODIR=lib/
 IDIR=include/
-CFLAGS=-I$(IDIR) -L$(ODIR) -lcunit
+CFLAGS=-I$(IDIR) -lcunit
 
 example: dirs main.o functions.o
 	gcc $(CFLAGS) src/main.o src/functions.o -o bin/example

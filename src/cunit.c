@@ -4,12 +4,11 @@
 #include "cunit.h"
 
 #define NO_REASONS 100
-#define INT 1
-#define STRING 2
-#define log printf("I got here!\n");
+
+enum TYPE {INT, STRING, BOOLEAN};
 
 struct utest {
-    char *title;
+    char *description;
     char *reasons[NO_REASONS];
     char **reasons_ptr;
     int failed;
@@ -22,7 +21,7 @@ int num_tests = 0;
 
 void print_reasons(char **, int);
 void free_utest(struct utest *);
-char * expected_actual_string(int, void *, void *);
+char * expected_actual_string(enum TYPE, void *, void *);
 void fail_test_with_reason(const char *, char *);
 
 
@@ -34,23 +33,16 @@ print_results(void) {
     if (!num_tests)
         return;
     while (tmp) {
-        if (tmp->failed)
-            printf("*");
+        if (tmp->failed) {
+            printf("✘ %s\n", tmp->description);
+            print_reasons(tmp->reasons, tmp->failed);
+        }
         else
-            printf("'");
+            printf("✔ %s\n", tmp->description);
         tmp = tmp->ptr;
     }
     printf("\n");
     tmp = head;
-    while (tmp) {
-        if (tmp->failed > 0) {
-            printf("Failed test: %s\n", tmp->title);
-            print_reasons(tmp->reasons, tmp->failed);
-        }
-        struct utest *to_free = tmp;
-        tmp = tmp->ptr;
-        free_utest(to_free);
-    }
     printf("\n");
 }
 
@@ -58,53 +50,60 @@ void
 print_reasons(char **reasons, int number) {
     char **rtmp = reasons;
     for (int i = 0; i < number; i++)
-        printf("\t%s\n", *rtmp++);
+        printf("    %s\n", *rtmp++);
 }
 
 void
-test(const char *desc, void (*fn)()) {
-    struct utest *new_test;
+test(const char *description, void (*fn)()) {
     if (!num_tests) {
-        new_test = head = (struct utest *) malloc(sizeof(struct utest));
-        tail = head;
+        tail = head = (struct utest *) malloc(sizeof(struct utest));
     }
     else {
-        new_test = (struct utest *) malloc(sizeof(struct utest));
+        struct utest *new_test = (struct utest *) malloc(sizeof(struct utest));
         tail->ptr = new_test;
         tail = new_test;
+        tail->ptr = NULL;
     }
     tail->reasons_ptr = tail->reasons;
 
-    new_test->title = (char *)malloc(strlen(desc) + 1);
-    strcpy(new_test->title, desc);
+    tail->description = (char *)malloc(strlen(description) + 1);
+    strcpy(tail->description, description);
 
-    new_test->failed = 0;
-    new_test->ptr = NULL;
+    tail->failed = 0;
 
     (*fn)();
     num_tests++;
-
-    tail = new_test;
 }
 
 int
-assert_equals_number(const char *reason, long double expected, long double actual) {
+assert_equal_numbers(const char *reason, long double expected, long double actual) {
     if (expected == actual)
-        return 1;
+        return 0;
     char *ex_ac = expected_actual_string(INT, &expected, &actual);
     fail_test_with_reason(reason, ex_ac);
     free(ex_ac);
-    return 0;
+    return 1;
 }
 
 int
-assert_equals_string(const char *reason, char *expected, char *actual) {
+assert_equal_strings(const char *reason, char *expected, char *actual) {
     if (strcmp(expected, actual) == 0)
-        return 1;
+        return 0;
     char *ex_ac = expected_actual_string(STRING, expected, actual);
     fail_test_with_reason(reason, ex_ac);
     free(ex_ac);
-    return 0;
+    return 1;
+}
+
+int
+assert_true(const char *reason, int expr) {
+    if (expr)
+        return 0;
+    int true = 1;
+    char *ex_ac = expected_actual_string(BOOLEAN, NULL, NULL);
+    fail_test_with_reason(reason, ex_ac);
+    free(ex_ac);
+    return 1;
 }
 
 void
@@ -117,21 +116,24 @@ fail_test_with_reason(const char *reason, char *expected_actual) {
 }
 
 char *
-expected_actual_string(int type, void *expected, void *actual) {
+expected_actual_string(enum TYPE type, void *expected, void *actual) {
     char proto[100];
     char result[100];
     char *r;
-    if (type == 1) {
+    if (type == INT) {
         long double *ex = (long double *)expected;
         long double *ac = (long double *)actual;
-        strcpy(proto, " :<expected %Lf but got %Lf>");
+        strcpy(proto, ": expected %Lg but got %Lg");
         sprintf(result, proto, *ex, *ac);
     }
-    if (type == 2) {
+    else if (type == STRING) {
         char *ex = (char *)expected;
         char *ac = (char *)actual;
-        strcpy(proto, " :<expected \"%s\" but got \"%s\">");
+        strcpy(proto, ": expected \"%s\" but got \"%s\"");
         sprintf(result, proto, ex, ac);
+    }
+    else if (type == BOOLEAN) {
+        strcpy(result, ": statement expected to be true but was false.");
     }
     r = (char *)malloc(strlen(result) + 1);
     strcpy(r,result);
@@ -144,6 +146,6 @@ free_utest(struct utest *ptr) {
     for (int i = 0; i < ptr->failed; i++) {
         free(*t++);
     }
-    free(ptr->title);
+    free(ptr->description);
     free(ptr);
 }
