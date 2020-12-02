@@ -123,7 +123,7 @@ expected_actual_string(enum TYPE type, void *expected, void *actual) {
     if (type == INT) {
         long double *ex = (long double *)expected;
         long double *ac = (long double *)actual;
-        strcpy(proto, ": expected %Lg but got %Lg");
+        strcpy(proto, ": expected %.50Lg but got %.50Lg");
         sprintf(result, proto, *ex, *ac);
     }
     else if (type == STRING) {
