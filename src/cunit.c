@@ -5,7 +5,7 @@
 
 #define NO_REASONS 100
 
-enum TYPE {INT, STRING, BOOLEAN};
+enum TEST_TYPE {NUMBER, STRING, BOOLEAN_TRUE, BOOLEAN_FALSE};
 
 struct utest {
     char *description;
@@ -21,9 +21,8 @@ int num_tests = 0;
 
 void print_reasons(char **, int);
 void free_utest(struct utest *);
-char * expected_actual_string(enum TYPE, void *, void *);
+char * expected_actual_string(enum TEST_TYPE, void *, void *);
 void fail_test_with_reason(const char *, char *);
-
 
 
 void
@@ -79,7 +78,7 @@ int
 assert_equal_numbers(const char *reason, long double expected, long double actual) {
     if (expected == actual)
         return 0;
-    char *ex_ac = expected_actual_string(INT, &expected, &actual);
+    char *ex_ac = expected_actual_string(NUMBER, &expected, &actual);
     fail_test_with_reason(reason, ex_ac);
     free(ex_ac);
     return 1;
@@ -99,8 +98,17 @@ int
 assert_true(const char *reason, int expr) {
     if (expr)
         return 0;
-    int true = 1;
-    char *ex_ac = expected_actual_string(BOOLEAN, NULL, NULL);
+    char *ex_ac = expected_actual_string(BOOLEAN_TRUE, NULL, NULL);
+    fail_test_with_reason(reason, ex_ac);
+    free(ex_ac);
+    return 1;
+}
+
+int
+assert_false(const char *reason, int expr) {
+    if (expr)
+        return 0;
+    char *ex_ac = expected_actual_string(BOOLEAN_FALSE, NULL, NULL);
     fail_test_with_reason(reason, ex_ac);
     free(ex_ac);
     return 1;
@@ -116,11 +124,11 @@ fail_test_with_reason(const char *reason, char *expected_actual) {
 }
 
 char *
-expected_actual_string(enum TYPE type, void *expected, void *actual) {
+expected_actual_string(enum TEST_TYPE type, void *expected, void *actual) {
     char proto[100];
     char result[100];
     char *r;
-    if (type == INT) {
+    if (type == NUMBER) {
         long double *ex = (long double *)expected;
         long double *ac = (long double *)actual;
         strcpy(proto, ": expected %.50Lg but got %.50Lg");
@@ -132,8 +140,11 @@ expected_actual_string(enum TYPE type, void *expected, void *actual) {
         strcpy(proto, ": expected \"%s\" but got \"%s\"");
         sprintf(result, proto, ex, ac);
     }
-    else if (type == BOOLEAN) {
+    else if (type == BOOLEAN_TRUE) {
         strcpy(result, ": statement expected to be true but was false.");
+    }
+    else if (type == BOOLEAN_FALSE) {
+        strcpy(result, ": statement expected to be false but was true.");
     }
     r = (char *)malloc(strlen(result) + 1);
     strcpy(r,result);
