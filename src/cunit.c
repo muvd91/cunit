@@ -106,7 +106,7 @@ assert_true(const char *reason, int expr) {
 
 int
 assert_false(const char *reason, int expr) {
-    if (expr)
+    if (!expr)
         return 0;
     char *ex_ac = expected_actual_string(BOOLEAN_FALSE, NULL, NULL);
     fail_test_with_reason(reason, ex_ac);
